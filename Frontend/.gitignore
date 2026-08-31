@@ -1,0 +1,31 @@
+# Secrets — .env.local.example is the only env file tracked
+.env
+.env.*
+!.env.local.example
+
+# Next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# Deps
+node_modules/
+.pnp
+.pnp.js
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
