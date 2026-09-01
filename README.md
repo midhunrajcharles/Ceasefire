@@ -46,29 +46,66 @@ economics as much as to the threat.
 
 A five-stage pipeline where **every expensive operation is protected by a free one**.
 
+```mermaid
+flowchart TD
+    IN["Brand domain<br/>example.com"]
+
+    subgraph GEN["STAGE 1 · GENERATE &mdash; costs nothing"]
+        direction TB
+        G1["services/permutations.py"]
+        G2["7 techniques<br/>homoglyph · omission · transposition · insertion<br/>tld-swap · hyphenation · combosquat"]
+        G3["Cyrillic confusables resolved to punycode<br/>ascii_domain carries the form used for DNS"]
+        G1 --> G2 --> G3
+    end
+
+    C1["~126 candidates"]
+
+    subgraph PRE["STAGE 2 · PREFILTER &mdash; free, spends no search"]
+        direction TB
+        P1{"DNS A/AAAA<br/>resolves?"}
+        P2["MX records present?<br/>sets mail_capable = phishing-ready"]
+        P3{"HTTP 200<br/>and a title?"}
+        PX["Dropped &mdash; cannot impersonate anyone<br/>surfaced as a defensive-registration candidate"]
+        P1 -- "no" --> PX
+        P1 -- "yes ~40 survive" --> P2
+        P2 --> P3
+        P3 -- "no" --> PX
+    end
+
+    C2["~1-3 survivors<br/>a ~97% reduction before a single paid search"]
+
+    subgraph SWP["STAGE 3 · SWEEP &mdash; the only stage that spends money"]
+        direction TB
+        S1["services/sweep.py orchestrates 10 surfaces"]
+        S2["google &mdash; 1 search per survivor"]
+        S3["AI Overview &mdash; 2 searches, no_cache"]
+        S4["AI Mode &mdash; 1 search, no_cache"]
+        S5["7 brand engines &mdash; 1 search each, cacheable"]
+        S1 --> S2 & S3 & S4 & S5
+    end
+
+    C3["survivors + 10 searches<br/>typically 11-13, worst case 25"]
+
+    subgraph SCO["STAGE 4 · SCORE &mdash; a documented heuristic, not a model"]
+        direction TB
+        R1["CRITICAL &mdash; cited in AI Overview or AI Mode"]
+        R2["HIGH &mdash; live AND mail-capable, or an app-store listing"]
+        R3["MEDIUM &mdash; local pack, or commerce listing"]
+        R4["LOW &mdash; parked, or unregistered"]
+    end
+
+    subgraph NOT["STAGE 5 · NOTICE &mdash; a human is always in the loop"]
+        direction TB
+        N1["draft"] --> N2["reviewed"] --> N3["signed"]
+        N4["signing an unapproved notice is a hard 409<br/>nothing is ever delivered automatically"]
+    end
+
+    IN --> GEN --> C1 --> PRE --> C2 --> SWP --> C3 --> SCO --> NOT
 ```
-  BRAND DOMAIN
-       |
-  [1] GENERATE      7 permutation techniques  ─────────►  ~126 candidates
-       |            homoglyph · omission · transposition · insertion
-       |            tld-swap · hyphenation · combosquat
-       |            (Cyrillic confusables resolved to punycode)
-       ▼
-  [2] PREFILTER     DNS A/AAAA resolves?  ─────────────►  ~40 survive    FREE
-       |            MX records present?   →  mail_capable = phishing-ready
-       |            HTTP 200 + <title>?   ─────────────►  ~1-3 survive   FREE
-       |            ↑ nothing here spends a search. A domain that does not
-       |              resolve cannot impersonate anyone, and costs nothing
-       |              to rule out.
-       ▼
-  [3] SWEEP         10 search surfaces, survivors only ►  2-4 searches spent
-       |            cached · rate-limited · budget-metered before the call
-       ▼
-  [4] SCORE         CRITICAL / HIGH / MEDIUM / LOW
-       |            every reason names the measurement behind it
-       ▼
-  [5] NOTICE        draft ─► reviewed ─► signed          A HUMAN SIGNS. ALWAYS.
-```
+
+> **Full diagram set — [`ARCHITECTURE.md`](ARCHITECTURE.md)** — the order of operations
+> inside a paid search, the token bucket, the exact tiering decision order, a sweep as a
+> sequence, scan and notice lifecycles, the SSRF guard, and the trust boundaries.
 
 ### The ten surfaces
 
@@ -205,6 +242,8 @@ attacker does.
 
 ```
 SERP/
+├── README.md                     this file
+├── ARCHITECTURE.md               10 mermaid diagrams — how the pipeline actually runs
 ├── backend/                      FastAPI service — 3,817 lines
 │   ├── app/
 │   │   ├── main.py               app factory, CORS, security headers, router mounting
