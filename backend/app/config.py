@@ -31,8 +31,12 @@ class Settings(BaseSettings):
     serpapi_key: str = ""
     search_budget_total: int = 250
     search_budget_alert_at: int = 200
-    serpapi_rate_per_hour: int = 50
-    serpapi_burst: int = 10
+    # The burst must exceed the searches ONE sweep spends, or every sweep stalls on
+    # the bucket. Worst case is demo_max_permutations (one google search per survivor)
+    # + 2 AI Overview + 1 AI Mode + 7 brand engines = 25. The monthly
+    # search_budget_total is the quota guard; this bucket only paces the calls.
+    serpapi_rate_per_hour: int = 3600
+    serpapi_burst: int = 30
     demo_max_permutations: int = 15
     serp_cache_ttl_hours: int = 24
 

@@ -84,7 +84,7 @@ export default function ScanInput({ onScan, busy, isMock, organisation }: ScanIn
             {busy ? 'Scanning' : 'Run sweep'}
           </button>
           <span className="text-[11px] uppercase tracking-[0.15em] text-neutral-400 font-mono">
-            Ten surfaces · ~20s · 15 searches
+            Ten surfaces · up to 25 searches
           </span>
         </div>
       </form>
