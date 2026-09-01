@@ -219,13 +219,8 @@ function ScanApp() {
         if (pollRef.current === null) pollRef.current = setInterval(tick, POLL_MS);
       } catch (e) {
         setBusy(false);
-        setError(
-          e instanceof Error
-            ? `${e.message} — is the backend running on ${
-                process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000'
-              }?`
-            : 'Scan failed',
-        );
+        // api.ts already names the unreachable base URL, so don't append it again.
+        setError(e instanceof Error ? e.message : 'Scan failed');
         setScan((s) => ({ ...s, state: 'error' }));
       }
     },

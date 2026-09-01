@@ -18,7 +18,7 @@ import type {
   TrendPoint,
 } from './workspace';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api';
 
 /**
  * Every response on this client is a row the backend computed. There is no
@@ -32,16 +32,17 @@ export class ApiError extends Error {
 }
 
 /**
- * `credentials: 'include'` is not optional. The session is an httpOnly cookie on
- * localhost:8000 and the app is served from localhost:3000 — a cross-origin fetch
- * drops the cookie without it, and every authenticated route answers 401.
+ * Requests go through the /api rewrite, so they are same-origin and the httpOnly
+ * session cookie is sent normally. `credentials` is still stated explicitly rather
+ * than left to the default, because the cookie is what every authenticated route
+ * depends on.
  */
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_BASE}${path}`, {
       ...init,
-      credentials: 'include',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
     });
   } catch {
