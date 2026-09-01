@@ -2,7 +2,12 @@
 
 import React, { useState } from 'react';
 import { Badge, Button, EmptyState, PageHeader, Panel } from '../ui';
-import { DOMAIN_STATUS_LABEL, PORTFOLIO, relativeTime, type DomainStatus } from '@/lib/workspace';
+import {
+  DOMAIN_STATUS_LABEL,
+  relativeTime,
+  type DomainStatus,
+  type PortfolioDomain,
+} from '@/lib/workspace';
 
 const GROUPS: { status: DomainStatus; lede: string }[] = [
   { status: 'hostile',   lede: 'Registered by someone else, live, and actively impersonating. These are notice candidates.' },
@@ -18,7 +23,13 @@ const TONE: Record<DomainStatus, 'critical' | 'ok' | 'neutral' | 'dark'> = {
   watchlist: 'neutral',
 };
 
-export default function DomainsView({ onRegister }: { onRegister: (domain: string) => void }) {
+export default function DomainsView({
+  domains,
+  onRegister,
+}: {
+  domains: PortfolioDomain[];
+  onRegister: (domain: string) => void;
+}) {
   const [filter, setFilter] = useState<DomainStatus | 'ALL'>('ALL');
   const groups = filter === 'ALL' ? GROUPS : GROUPS.filter((g) => g.status === filter);
 
@@ -31,7 +42,7 @@ export default function DomainsView({ onRegister }: { onRegister: (domain: strin
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-neutral-200 border border-neutral-200 rounded-lg overflow-hidden mb-10">
         {GROUPS.map((g) => {
-          const n = PORTFOLIO.filter((d) => d.status === g.status).length;
+          const n = domains.filter((d) => d.status === g.status).length;
           const active = filter === g.status;
           return (
             <button
@@ -53,7 +64,7 @@ export default function DomainsView({ onRegister }: { onRegister: (domain: strin
 
       <div className="space-y-12">
         {groups.map((g) => {
-          const rows = PORTFOLIO.filter((d) => d.status === g.status);
+          const rows = domains.filter((d) => d.status === g.status);
           return (
             <Panel
               key={g.status}
@@ -83,7 +94,7 @@ export default function DomainsView({ onRegister }: { onRegister: (domain: strin
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <Badge tone={TONE[d.status]}>{DOMAIN_STATUS_LABEL[d.status]}</Badge>
-                          <Badge>{d.technique}</Badge>
+                          {d.technique && <Badge>{d.technique}</Badge>}
                           {d.mailCapable && <Badge tone="critical">Mail-capable</Badge>}
                           {d.registrar && (
                             <span className="font-mono text-[10px] text-neutral-400">
@@ -100,7 +111,9 @@ export default function DomainsView({ onRegister }: { onRegister: (domain: strin
                           </div>
                           <div className="mt-1 font-mono text-[12px] text-neutral-700 tabular-nums">
                             {d.status === 'available'
-                              ? `$${d.priceUsd?.toFixed(2)}`
+                              ? d.priceUsd != null
+                                ? `$${d.priceUsd.toFixed(2)}`
+                                : 'No quote'
                               : relativeTime(d.firstSeen)}
                           </div>
                         </div>

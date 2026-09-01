@@ -2,16 +2,24 @@
 
 import React from 'react';
 import { Badge, Eyebrow, PageHeader, Panel, Stat, StatRow, Meter } from '../ui';
-import { SURFACE_STATS } from '@/lib/workspace';
+import type { SurfaceStat } from '@/lib/workspace';
 import { ENGINES } from '@/lib/types';
 
-export default function SurfacesView() {
-  const byId = Object.fromEntries(SURFACE_STATS.map((s) => [s.id, s]));
-  const totalFindings = SURFACE_STATS.reduce((n, s) => n + s.findingsAllTime, 0);
-  const totalSearches = SURFACE_STATS.reduce((n, s) => n + s.searchesSpent, 0);
-  const avgCache =
-    SURFACE_STATS.reduce((n, s) => n + s.cacheHitRate, 0) / SURFACE_STATS.length;
-  const maxFindings = Math.max(...SURFACE_STATS.map((s) => s.findingsAllTime), 1);
+const ZERO: Omit<SurfaceStat, 'id'> = {
+  findingsAllTime: 0,
+  searchesSpent: 0,
+  avgMs: 0,
+  cacheHitRate: 0,
+};
+
+export default function SurfacesView({ surfaces }: { surfaces: SurfaceStat[] }) {
+  const byId = Object.fromEntries(surfaces.map((s) => [s.id, s]));
+  const totalFindings = surfaces.reduce((n, s) => n + s.findingsAllTime, 0);
+  const totalSearches = surfaces.reduce((n, s) => n + s.searchesSpent, 0);
+  const avgCache = surfaces.length
+    ? surfaces.reduce((n, s) => n + s.cacheHitRate, 0) / surfaces.length
+    : 0;
+  const maxFindings = Math.max(...surfaces.map((s) => s.findingsAllTime), 1);
 
   return (
     <>
@@ -34,7 +42,7 @@ export default function SurfacesView() {
       <Panel title="Per-surface performance" className="mt-14">
         <div className="divide-y divide-neutral-200">
           {ENGINES.map((e, i) => {
-            const s = byId[e.id];
+            const s = byId[e.id] ?? { id: e.id, ...ZERO };
             return (
               <div key={e.id} className="px-5 py-5 hover:bg-neutral-50 transition-colors">
                 <div className="flex flex-wrap items-start justify-between gap-6">
@@ -85,7 +93,7 @@ export default function SurfacesView() {
             <Row k="Free tier" v="250 searches / month" />
             <Row k="Throughput" v="50 / hour — token bucket, jittered backoff" />
             <Row k="Prefilter" v="DNS, MX and HTTP checks run before any search is spent" />
-            <Row k="Cache" v="Results stored in Xano and replayed on repeat sweeps" />
+            <Row k="Cache" v="Results stored server-side and replayed on repeat sweeps" />
             <Row k="no_cache" v="Set on verification paths — a stale result is a missed detection" />
           </dl>
         </Panel>

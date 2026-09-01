@@ -1,15 +1,14 @@
 'use client';
 
+import { apiMe, apiSignin, apiSignout, apiSignup } from './api';
+
 /**
  * Session state for the frontend shell.
  *
- * This is a client-side stub so the interface is complete before the backend
- * lands. It deliberately stores ONLY the account identity — never a password.
- * When Xano auth is wired in, replace the three functions below with calls to
- * the auth endpoints and keep the same shape.
+ * The source of truth is the httpOnly session cookie held by the API — this module
+ * only asks the backend who the caller is. Nothing about the identity is stored in
+ * the browser, and a password never leaves the form.
  */
-
-const KEY = 'ceasefire.session.v1';
 
 export interface Session {
   email: string;
@@ -17,32 +16,22 @@ export interface Session {
   createdAt: string;
 }
 
-export function readSession(): Session | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Session;
-    return parsed?.email ? parsed : null;
-  } catch {
-    return null;
-  }
+/** Who the cookie belongs to, or null when nobody is signed in. */
+export function readSession(): Promise<Session | null> {
+  return apiMe();
 }
 
-export function writeSession(s: Session): void {
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(s));
-  } catch {
-    /* private mode / blocked storage — session simply won't persist */
-  }
+export function signIn(email: string, password: string): Promise<Session> {
+  return apiSignin(email, password);
 }
 
-export function clearSession(): void {
-  try {
-    window.localStorage.removeItem(KEY);
-  } catch {
-    /* no-op */
-  }
+export function signUp(email: string, password: string, organisation: string): Promise<Session> {
+  return apiSignup(email, password, organisation);
+}
+
+/** Revokes the session row server-side and clears the cookie. */
+export function signOut(): Promise<void> {
+  return apiSignout();
 }
 
 export function initials(email: string): string {

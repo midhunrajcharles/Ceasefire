@@ -157,3 +157,6 @@ $RECYCLE.BIN/
 *.swo
 *~
 .claude/settings.local.json
+
+# curl cookie jars from manual API testing - these hold live session tokens
+*.cookies

@@ -1,33 +1,55 @@
 'use client';
 
 import React from 'react';
-import { Badge, Button, Eyebrow, PageHeader, Panel, Stat, StatRow, TierBadge } from '../ui';
 import {
-  ACTIVITY,
-  NOTICES,
+  Badge,
+  Button,
+  EmptyState,
+  Eyebrow,
+  PageHeader,
+  Panel,
+  Stat,
+  StatRow,
+  TierBadge,
+} from '../ui';
+import {
   NOTICE_STAGE_LABEL,
-  PORTFOLIO,
-  TREND,
   relativeTime,
+  type ActivityEvent,
+  type NoticeRecord,
+  type PortfolioDomain,
+  type TrendPoint,
+  type WorkspaceStats,
 } from '@/lib/workspace';
 import type { ScanBudget } from '@/lib/types';
 import type { ViewKey } from '../AppShell';
 
 export default function OverviewView({
   budget,
+  stats,
+  trend,
+  activity,
+  notices,
+  domains,
   onNavigate,
 }: {
   budget: ScanBudget;
+  stats: WorkspaceStats;
+  trend: TrendPoint[];
+  activity: ActivityEvent[];
+  notices: NoticeRecord[];
+  domains: PortfolioDomain[];
   onNavigate: (v: ViewKey) => void;
 }) {
-  const hostile = PORTFOLIO.filter((d) => d.status === 'hostile');
-  const criticalOpen = NOTICES.filter(
-    (n) => n.tier === 'CRITICAL' && n.stage !== 'resolved',
-  ).length;
-  const inFlight = NOTICES.filter((n) => n.stage !== 'resolved').length;
-  const protectedCount = PORTFOLIO.filter((d) => d.status === 'protected').length;
+  const hostile = domains.filter((d) => d.status === 'hostile');
+  const protectedCount = domains.filter((d) => d.status === 'protected').length;
+  const awaiting = notices.filter(
+    (n) => n.stage === 'draft' || n.stage === 'awaiting_signature',
+  );
 
-  const max = Math.max(...TREND.map((t) => t.critical + t.high + t.medium + t.low));
+  // A workspace with no findings yet has every bucket at zero — floor the scale at 1
+  // so the chart renders flat rather than dividing by nothing.
+  const max = Math.max(1, ...trend.map((t) => t.critical + t.high + t.medium + t.low));
 
   return (
     <>
@@ -42,9 +64,18 @@ export default function OverviewView({
       />
 
       <StatRow>
-        <Stat label="Open criticals" value={criticalOpen} tone="alert" sub="Cited by Google's AI" />
-        <Stat label="Hostile domains" value={hostile.length} sub="Live and mail-capable" />
-        <Stat label="Notices in flight" value={inFlight} sub="Awaiting review or signature" />
+        <Stat
+          label="Open criticals"
+          value={stats.openCriticals}
+          tone="alert"
+          sub="Cited by Google's AI"
+        />
+        <Stat label="Hostile domains" value={stats.hostileDomains} sub="Live and mail-capable" />
+        <Stat
+          label="Notices in flight"
+          value={stats.noticesInFlight}
+          sub="Awaiting review or signature"
+        />
         <Stat
           label="Searches used"
           value={
@@ -66,7 +97,7 @@ export default function OverviewView({
         >
           <div className="px-6 py-8">
             <div className="flex items-end justify-between gap-3 h-52">
-              {TREND.map((t) => {
+              {trend.map((t) => {
                 const total = t.critical + t.high + t.medium + t.low;
                 const h = (n: number) => `${(n / max) * 100}%`;
                 return (
@@ -109,7 +140,13 @@ export default function OverviewView({
         {/* Needs attention */}
         <Panel title="Needs attention">
           <div className="divide-y divide-neutral-200">
-            {NOTICES.filter((n) => n.stage === 'draft' || n.stage === 'awaiting_signature').map((n) => (
+            {awaiting.length === 0 && hostile.length === 0 && (
+              <EmptyState
+                title="Nothing waiting on you"
+                body="Run a sweep and anything that needs a decision will surface here."
+              />
+            )}
+            {awaiting.map((n) => (
               <button
                 key={n.id}
                 onClick={() => onNavigate('notices')}
@@ -137,7 +174,8 @@ export default function OverviewView({
                   {d.domain}
                 </div>
                 <p className="mt-1.5 text-[11px] leading-relaxed text-neutral-500">
-                  Registered at {d.registrar}, MX configured — able to send mail that looks like yours.
+                  {d.registrar ? `Registered at ${d.registrar}, ` : ''}MX configured — able to send
+                  mail that looks like yours.
                 </p>
               </div>
             ))}
@@ -158,8 +196,14 @@ export default function OverviewView({
         }
         className="mt-14"
       >
+        {activity.length === 0 && (
+          <EmptyState
+            title="No activity yet"
+            body="Sweeps, findings, notices and registrations are recorded here as they happen."
+          />
+        )}
         <ul className="divide-y divide-neutral-200">
-          {ACTIVITY.map((a) => (
+          {activity.map((a) => (
             <li key={a.id} className="flex items-start gap-4 px-5 py-4">
               <span
                 className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${

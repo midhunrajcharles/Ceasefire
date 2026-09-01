@@ -1,30 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Badge, Button, PageHeader, Panel } from '../ui';
-import { INTEGRATIONS } from '@/lib/workspace';
-import { TIER_DEFINITION, TIER_ORDER } from '@/lib/types';
+import type { Integration } from '@/lib/workspace';
+import { TIER_DEFINITION, TIER_ORDER, type ScanBudget } from '@/lib/types';
 import type { Session } from '@/lib/session';
 
 export default function SettingsView({
   session,
+  integrations,
+  budget,
   onSignOut,
 }: {
   session: Session;
+  integrations: Integration[];
+  budget: ScanBudget;
   onSignOut: () => void;
 }) {
-  const [org, setOrg] = useState(session.organisation);
-  const [primaryDomain, setPrimaryDomain] = useState('');
-  const [budget, setBudget] = useState('250');
-  const [alertAt, setAlertAt] = useState('200');
-  const [permutations, setPermutations] = useState('15');
-  const [saved, setSaved] = useState(false);
-
-  function save(e: React.FormEvent) {
-    e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2200);
-  }
 
   return (
     <>
@@ -34,58 +26,39 @@ export default function SettingsView({
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
-        <form onSubmit={save} className="xl:col-span-2 space-y-10">
+        <div className="xl:col-span-2 space-y-10">
           <Panel title="Workspace">
-            <div className="px-5 py-6 space-y-7">
-              <Field id="org" label="Organisation" value={org} onChange={setOrg} />
-              <Field
-                id="primary"
-                label="Primary domain"
-                value={primaryDomain}
-                onChange={setPrimaryDomain}
-                placeholder="yourcompany.com"
-                hint="Every sweep generates permutations from this domain."
-              />
-              <Field id="acct" label="Account" value={session.email} onChange={() => {}} disabled />
-            </div>
+            <dl className="divide-y divide-neutral-200">
+              <Row k="Organisation" v={session.organisation} />
+              <Row k="Account" v={session.email} />
+              <Row k="Member since" v={new Date(session.createdAt).toLocaleDateString()} />
+            </dl>
           </Panel>
 
           <Panel title="Search budget">
-            <div className="px-5 py-6 space-y-7">
+            <div className="px-5 py-6 space-y-6">
               <p className="text-[12px] leading-relaxed text-neutral-500">
-                SerpApi&apos;s free tier allows 250 searches a month at 50 per hour. Ceasefire
-                enforces both limits in code — a scan pauses and resumes rather than failing.
+                SerpApi&apos;s free tier allows a fixed number of searches a month. Ceasefire
+                enforces the limit in code — a scan pauses and resumes rather than failing.
+                These are server-side guardrails, set in the backend environment.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-7">
-                <Field id="budget" label="Monthly budget" value={budget} onChange={setBudget} />
-                <Field id="alert" label="Alert at" value={alertAt} onChange={setAlertAt} />
-              </div>
-              <Field
-                id="perms"
-                label="Permutations per demo sweep"
-                value={permutations}
-                onChange={setPermutations}
-                hint="Capped deliberately. A 60-permutation sweep would consume a quarter of the monthly budget."
-              />
+              <dl className="grid grid-cols-1 sm:grid-cols-3 gap-7">
+                <Figure k="Monthly budget" v={budget.total} />
+                <Figure k="Spent" v={budget.spent} />
+                <Figure k="Served from cache" v={budget.cacheHits} />
+              </dl>
+              <p className="text-[11px] leading-relaxed text-neutral-400">
+                A cache hit answers a repeat query without spending a search. Every figure here is
+                counted from this workspace&apos;s own rows.
+              </p>
             </div>
           </Panel>
-
-          <div className="flex items-center gap-5">
-            <Button variant="primary" type="submit" data-cursor="Save">
-              Save changes
-            </Button>
-            {saved && (
-              <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-neutral-500 animate-fadeIn">
-                Saved locally
-              </span>
-            )}
-          </div>
-        </form>
+        </div>
 
         <div className="space-y-10">
           <Panel title="Integrations">
             <div className="divide-y divide-neutral-200">
-              {INTEGRATIONS.map((i) => (
+              {integrations.map((i) => (
                 <div key={i.name} className="px-5 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-mono text-[12px] text-neutral-900">{i.name}</span>
@@ -118,7 +91,8 @@ export default function SettingsView({
           <Panel title="Session">
             <div className="px-5 py-5">
               <p className="text-[12px] leading-relaxed text-neutral-500 mb-4">
-                The session is held in this browser only. No password is stored.
+                The session is an httpOnly cookie issued by the API. Signing out revokes it
+                server-side, not just in this browser.
               </p>
               <Button onClick={onSignOut} data-cursor="Sign out">
                 Sign out
@@ -131,41 +105,20 @@ export default function SettingsView({
   );
 }
 
-function Field({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-  hint,
-  disabled,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  hint?: string;
-  disabled?: boolean;
-}) {
+function Row({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="px-5 py-4">
+      <dt className="font-mono text-[10px] uppercase tracking-[0.15em] text-neutral-400">{k}</dt>
+      <dd className="mt-1 text-[13px] text-neutral-900 break-all">{v}</dd>
+    </div>
+  );
+}
+
+function Figure({ k, v }: { k: string; v: number }) {
   return (
     <div>
-      <label
-        htmlFor={id}
-        className="block text-[11px] uppercase tracking-[0.15em] text-neutral-400 font-mono mb-2"
-      >
-        {label}
-      </label>
-      <input
-        id={id}
-        value={value}
-        disabled={disabled}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        spellCheck={false}
-        className="w-full bg-transparent border-b border-neutral-200 px-0 py-3 text-[14px] text-neutral-900 placeholder:text-neutral-300 focus:border-black focus:outline-none transition-colors duration-300 disabled:text-neutral-400"
-      />
-      {hint && <p className="mt-2 text-[11px] leading-relaxed text-neutral-400">{hint}</p>}
+      <dt className="font-mono text-[10px] uppercase tracking-[0.15em] text-neutral-400">{k}</dt>
+      <dd className="mt-1 font-mono text-2xl tabular-nums text-neutral-900">{v}</dd>
     </div>
   );
 }

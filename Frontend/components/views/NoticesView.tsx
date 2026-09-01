@@ -2,13 +2,18 @@
 
 import React, { useState } from 'react';
 import { Badge, EmptyState, PageHeader, Panel, TierBadge } from '../ui';
-import { NOTICES, NOTICE_STAGE_LABEL, relativeTime, type NoticeStage } from '@/lib/workspace';
+import {
+  NOTICE_STAGE_LABEL,
+  relativeTime,
+  type NoticeRecord,
+  type NoticeStage,
+} from '@/lib/workspace';
 
 const STAGES: NoticeStage[] = ['draft', 'awaiting_signature', 'signed', 'delivered', 'resolved'];
 
-export default function NoticesView() {
+export default function NoticesView({ notices }: { notices: NoticeRecord[] }) {
   const [stage, setStage] = useState<NoticeStage | 'ALL'>('ALL');
-  const rows = stage === 'ALL' ? NOTICES : NOTICES.filter((n) => n.stage === stage);
+  const rows = stage === 'ALL' ? notices : notices.filter((n) => n.stage === stage);
 
   return (
     <>
@@ -20,7 +25,7 @@ export default function NoticesView() {
       {/* Pipeline */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-neutral-200 border border-neutral-200 rounded-lg overflow-hidden mb-10">
         {STAGES.map((s) => {
-          const n = NOTICES.filter((x) => x.stage === s).length;
+          const n = notices.filter((x) => x.stage === s).length;
           const active = stage === s;
           return (
             <button
@@ -52,15 +57,19 @@ export default function NoticesView() {
             </button>
           ) : (
             <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-neutral-400">
-              {NOTICES.length} total
+              {notices.length} total
             </span>
           )
         }
       >
         {rows.length === 0 ? (
           <EmptyState
-            title="Nothing at this stage"
-            body="Notices move from draft to signed only when a person approves them."
+            title={notices.length === 0 ? 'No notices yet' : 'Nothing at this stage'}
+            body={
+              notices.length === 0
+                ? 'Draft one from a finding in the Sweep view. Notices move from draft to signed only when a person approves them.'
+                : 'Notices move from draft to signed only when a person approves them.'
+            }
           />
         ) : (
           <div className="divide-y divide-neutral-200">
