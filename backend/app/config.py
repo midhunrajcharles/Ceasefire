@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -58,6 +59,21 @@ class Settings(BaseSettings):
 
     # Logging
     log_level: str = "INFO"
+
+    @field_validator("database_url")
+    @classmethod
+    def _pin_postgres_driver(cls, value: str) -> str:
+        """Force psycopg3 for Postgres URLs.
+
+        Managed hosts (Railway, Heroku, Render) inject `postgres://` or
+        `postgresql://`. SQLAlchemy maps both to psycopg2, which is NOT a
+        dependency here — requirements.txt ships psycopg 3. Without this the
+        process dies at import with ModuleNotFoundError: psycopg2.
+        """
+        for prefix in ("postgres://", "postgresql://"):
+            if value.startswith(prefix):
+                return "postgresql+psycopg://" + value[len(prefix):]
+        return value
 
     @property
     def is_production(self) -> bool:
