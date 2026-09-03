@@ -314,6 +314,19 @@ npm install
 npm run dev                       # → http://localhost:3000
 ```
 
+### Demo login
+
+A pre-seeded workspace for trying the app without signing up. It works against the
+deployed instance and against the SQLite database created on first run:
+
+| | |
+|---|---|
+| Email | `demo@northwind-supply.com` |
+| Password | `DemoPassw0rd!23` |
+
+These credentials are deliberately public. The workspace holds demo data only — do not
+put anything real in it.
+
 Tables are created on startup; there is no migration step. The default database is a SQLite
 file created on first run.
 
