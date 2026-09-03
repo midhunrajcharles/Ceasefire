@@ -354,14 +354,6 @@ the development database.
 
 ---
 
-## Stack
-
-**Backend** — FastAPI · SQLAlchemy 2.0 · Pydantic v2 · Argon2id · httpx · dnspython
-**Frontend** — Next.js 14 · React 18 · TypeScript · Tailwind · Three.js · Lenis
-**External** — SerpApi (ten surfaces) · name.com (registration, sandboxed) · Foxit (PDF/eSign) · Doctavian (templates) · Nutrient (review gate)
-
----
-
 ### One line
 
 **Ceasefire finds the impersonation before your customer does — including the one Google's
