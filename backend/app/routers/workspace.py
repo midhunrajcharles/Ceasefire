@@ -284,10 +284,6 @@ def workspace_integrations(user: CurrentUser):
         return "connected" if configured else "not_configured"
 
     serp = bool(settings.serpapi_key.strip())
-    foxit = bool(settings.foxit_client_id.strip() and settings.foxit_client_secret.strip())
-    doctavian = bool(settings.doctavian_api_key.strip())
-    nutrient = bool(settings.nutrient_api_key.strip())
-    namecom = bool(settings.namecom_username.strip() and settings.namecom_token.strip())
 
     return [
         IntegrationStatus(
@@ -307,31 +303,5 @@ def workspace_integrations(user: CurrentUser):
             status="connected",
             detail=f"{settings.database_url.split('://', 1)[0]} · "
             f"{settings.serp_cache_ttl_hours}h result cache",
-        ),
-        IntegrationStatus(
-            name="Foxit",
-            role="PDF generation + eSign",
-            status=state(foxit),
-            detail=settings.foxit_base_url if foxit else "FOXIT_CLIENT_ID/SECRET not set",
-        ),
-        IntegrationStatus(
-            name="Doctavian",
-            role="Conditional-template notices",
-            status=state(doctavian),
-            detail="eIDAS-aligned signatures"
-            if doctavian
-            else "DOCTAVIAN_API_KEY not set — notices use the built-in template",
-        ),
-        IntegrationStatus(
-            name="Nutrient",
-            role="Embedded review gate",
-            status=state(nutrient),
-            detail="Viewer + annotation" if nutrient else "NUTRIENT_API_KEY not set",
-        ),
-        IntegrationStatus(
-            name="name.com",
-            role="Availability + registration",
-            status=state(namecom),
-            detail=settings.namecom_base_url if namecom else "NAMECOM_USERNAME/TOKEN not set",
         ),
     ]
